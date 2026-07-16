@@ -9,6 +9,7 @@ tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 reqwest = { version = "0.11", features = ["json"] }
+clap = { version = "4", features = ["derive"] }
 tokio-util = { version = "0.7", features = ["codec"] }
 tower = "0.4"
 tower-http = { version = "0.5", features = ["cors"] }

@@ -5,9 +5,17 @@ use axum::{
 	routing::get,
 	Json, Router,
 };
+use clap::Parser;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::env;
+
+#[derive(Parser, Debug)]
+#[command(name = "opn-dashboard")]
+struct Args {
+	/// Path to configuration file
+	#[arg(short, long, default_value = "config.yaml")]
+	config: String,
+}
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct GatewayConfig {
@@ -105,9 +113,11 @@ impl From<GatewayResponse> for GatewayStatus {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+	let args = Args::parse();
+
 	// Read configuration from file
-	let config_content = std::fs::read_to_string("config.yaml")
-		.expect("Failed to read config.yaml");
+	let config_content = std::fs::read_to_string(&args.config)
+		.expect("Failed to read config file");
 	let config: Config = serde_yaml::from_str(&config_content)
 		.expect("Failed to parse YAML config");
 
