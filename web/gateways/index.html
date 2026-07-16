@@ -129,7 +129,7 @@
         function renderGatewayData(data) {
             const container = document.getElementById('gateway-container');
 
-            if (!data || Object.keys(data).length === 0) {
+            if (!data || data.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <p>No gateway data available</p>
@@ -138,7 +138,7 @@
                 return;
             }
 
-            const html = Object.entries(data).map(([name, agData]) => createGatewayGroup(agData, agData)).join('');
+            const html = data.map(([name, agData]) => createGatewayGroup(agData, agData)).join('');
             container.innerHTML = html;
         }
 

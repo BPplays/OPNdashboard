@@ -148,12 +148,12 @@ async fn health_check() -> impl IntoResponse {
 }
 
 async fn get_gateways(State(state): State<AppState>) -> impl IntoResponse {
-    let mut response = HashMap::<String, AggregatedGateway>::new();
+    let mut response = Vec::<(String, AggregatedGateway)>::new();
 
     for gateway_config in &state.config.gateways {
         let gateways = fetch_gateways(&state.client, &state.config.opnsense.url, &state.config.opnsense.api_key, &state.config.opnsense.api_secret, &gateway_config.gateway_names).await;
         let agated_gateway = aggregate_gateway_data(gateway_config.name.clone(), gateways);
-        response.insert(gateway_config.name.clone(), agated_gateway);
+        response.push((gateway_config.name.clone(), agated_gateway));
     }
 
     Json(response)
