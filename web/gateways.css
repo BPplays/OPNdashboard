@@ -30,12 +30,10 @@
     --red: #f38ba8;
 
 
-
     --primary:     var(--pink);
     --secondary:     var(--green);
 
     --color_warn:     var(--red);
-
 
     --link:  var(--pink);
 
@@ -55,9 +53,7 @@ html, body {
 /* ── Header ─────────────────────────────────────────────── */
 header {
     display: flex; align-items: baseline; gap: 14px;
-    /* padding: 20px 24px 14px; */
     border-bottom: 1px solid var(--border);
-    /*position: sticky; top: 0;*/
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -72,7 +68,6 @@ nav ul {
     padding: 0;
     justify-content: center;
     gap: 2rem;
-
 }
 
 nav a {
@@ -80,12 +75,12 @@ nav a {
     text-decoration: none;
     padding: 0.5rem 1rem;
     border-radius: 4px;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, opacity 0.15s;
 }
 
 nav a:hover {
-    background-color: #34495e;
-
+    background-color: var(--surface0);
+    opacity: 0.8;
 }
 
 main {
@@ -97,21 +92,15 @@ main {
     padding: 0 1rem;
     border-radius: var(--radius);
     box-shadow: 0 2px 10px color-mix(in srgb, var(--mantle) 20%, transparent);
-
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
-
 
 article {
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-video {
-    border-radius: var(--radius);
 }
 
 a {
@@ -124,198 +113,129 @@ code {
     border-radius: 4px;
     padding-left: 0.15rem;
     padding-right: 0.15rem;
-
     background: var(--surface0);
     color: var(--text);
     font-family: 'Inter', "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-.hero {
-    text-align: center;
-    padding: 2rem 0;
-
-}
-
-.hero h2 {
-    margin-bottom: 0.5rem;
-
-}
-
 .blog-header {
     text-align: center;
     padding: 2rem 0;
-
-}
-
-.article-list {
-    padding: 1rem 0;
-
-}
-
-.article-list article {
-    padding: 1.5rem 0;
-    border-bottom: 1px solid #eee;
-
-}
-
-.article-list article:last-child {
-    border-bottom: none;
-
-}
-
-.article-list h3 {
-    margin-top: 0;
-
-}
-
-.article-list a {
-    text-decoration: none;
-    font-size: 1.2rem;
-    display: block;
-    margin-bottom: 0.5rem;
-
-    background: var(--bg);
-    color: var(--blue);
-}
-
-.article-list a:hover {
-    text-decoration: underline;
-
-}
-
-.blog-post {
-    padding: 0.8rem 0;
-
-}
-
-.blog-post header {
-    margin-bottom: 2rem;
-    padding-top: 0.0rem;
-    padding-right: 0.5rem;
-    padding-left: 0.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border);
-
-}
-
-.content section {
-    padding-top: 0.0rem;
-    padding-right: 0.2rem;
-    padding-left: 0.2rem;
-    padding-bottom: 0.0rem;
-
 }
 
 .meta {
     font-size: 0.9rem;
-
+    color: var(--overlay1);
 }
 
-.content h1, .content h2, .content h3 {
-    margin-top: 1rem;
-    margin-bottom: 0.3rem;
-
-}
-
-.content p {
-    margin-bottom: 0rem;
-}
-
-p.warning {
-    background-color: var(--color_warn);
-    color: var(--text_dark);
-    padding: 0.65rem;
+/* ── Gateway Dashboard Styles ───────────────────────────── */
+.gateway-group {
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
     border-radius: var(--radius);
-}
-
-/*.warning {
-    color: var(--color_warn);
-}*/
-
-.content ul, .content ol {
-    margin-bottom: 1rem;
-    padding-left: 1.5rem;
-
-}
-
-.content li {
-    margin-bottom: 0.5rem;
-
-}
-
-footer {
-    text-align: center;
-    padding: 2rem 0;
-    margin-top: 2rem;
-
+    overflow: hidden;
     background: var(--bg);
-    color: var(--blue);
-    font-family: 'Inter', "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-.adaptive-video {
+.group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 1.1rem;
+}
 
+.group-header h3 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.group-stats {
+    display: flex;
+    gap: 2rem;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--mantle);
+}
+
+.gateway-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.gateway-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: opacity 150ms;
+}
+
+.gateway-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.gateway-name {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius);
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid transparent;
+}
+
+.gateway-stats {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0.75rem 1rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--overlay1);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.gateway-card .gateway-header + .gateway-stats {
+    border-top: none;
+}
+
+/* ── Empty State ────────────────────────────────────────── */
+.empty-state {
     text-align: center;
-    justify-content: center;
-
-    display: block;
-    width: 100%;
-    aspect-ratio: var(--aspect-ratio);
-    object-fit: cover;
-
-    background:
-        linear-gradient(
-            90deg,
-            var(--surface0) 25%,
-            var(--surface1) 50%,
-            var(--surface0) 75%
-        );
-    background-size: 200% 100%;
-
-    animation: skeleton 1.5s linear infinite;
+    padding: 4rem 0;
+    color: var(--overlay1);
 }
 
-.adaptive-video.loaded {
-    background: none;
-    animation: none;
-}
-
-@keyframes skeleton {
-    from { background-position: 200% 0; }
-    to   { background-position: -200% 0; }
-}
-
-.adaptive-video-wrapper {
-    position: relative;
-    display: inline-block;
-}
-
-.adaptive-video-wrapper video {
-    display: block;
-    width: 100%;
-    height: auto;
-}
-
-.adaptive-video-wrapper video:not(:first-child) {
-    position: absolute;
-    inset: 0;
-}
-
-.active {
-    opacity: 1;
-    transition: opacity 150ms;
-}
-
-.inactive {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 150ms;
-}
-
-
-
-/* scroll bar */
-
+/* ── Scroll Bar ─────────────────────────────────────────── */
 ::-webkit-scrollbar {
     width: 0.5rem;
 }
@@ -338,7 +258,5 @@ footer {
     html {
         scrollbar-width: thin;
         scrollbar-color: var(--scroll-thumb) var(--scroll-track);
-        scrollbar-
     }
 }
-

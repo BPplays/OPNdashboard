@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elden Ring Steam Controller - bpplays.github.io</title>
+    <title>Gateway Dashboard</title>
     <link rel="stylesheet" href="./gateways.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,116 +20,132 @@
 
 </head>
 <body>
-    <!-- <header>
-        <h1>bpplays.github.io</h1>
+
+    <header>
         <nav>
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/blog/">Blog</a></li>
-            </ul>
+            <a href="/page-gateways" class="active">Gateways</a>
         </nav>
-    </header> -->
+    </header>
 
     <main>
-        <article class="blog-post">
-            <header>
-                <h1>My Elden Ring Steam Controller Config</h1>
-                <p class="meta">Published: 2026年06月10日</p>
-            </header>
+        <div class="blog-header">
+            <h2>Network Gateway Status</h2>
+            <p class="meta">Auto-refreshing every 3 seconds</p>
+        </div>
 
-            <section class="content">
-                <p class="warning">
-                This config expects A to be roll and B to be jump, and for mouse lock-on target change sensitivity to be lowest
-                </p>
-                <br>
-                <p>
-                Download the config <a href="vdf/bpplays_elden_ring_config_v1.0.0_0.vdf" download>here</a> and put it in <code>&lt;steam folder&gt;\steamapps\common\Steam Controller Configs\&lt;user id&gt;\config\1245620</code>.
-                </p>
-                <h1>
-                About the config
-                </h1>
-
-                <p>
-                The&nbsp;A&nbsp;button uses <code>Start Press</code> to be act&nbsp;on&nbsp;press instead of on&nbsp;release for lower&nbsp;latency (see
-                <a href="https://x.com/ID_AA_Carmack/status/1787850053912064005"
-                    target="_blank"
-                    rel="noopener noreferrer">
-                    Carmack's tweet</a>)
-                this makes A roll&nbsp;only, and L4 for running
-                </p>
-
-                <br>
-                <p>
-
-                this config is for A to be roll only (having A roll on press instead of on release is lower latency) and L4 to be for running, B is only for menus and R4 is for jumping, left touchpad is for pouch.
-                <br>
-                <br>
-
-                the right joystick acts as mouse to work around disabling auto camera rotation being broken, in the map screen hold B then the bumper become zoom in the map,
-                <br>
-                holding B also turns the left touchpad into a shortcut for gestures (only works when outside a menu)
-                </p>
-
-                <h2>test2</h2>
-                <p>test3</p>
-                <ol>
-                    <li>test4</li>
-                </ol>
-
-                <video
-                    autoplay
-                    loop
-                    muted
-                    playsinline
-                    preload="auto"
-                    class="adaptive-video autoplay"
-                    style="--aspect-ratio:16/9"
-                    data-hdr-src="vid/elden_ring_controller_horse_demo_hdr_dynamic_agtm.mp4"
-                    data-sdr-src="vid/elden_ring_controller_horse_demo_sdr.mp4">
-                </video>
-
-                <video
-                    autoplay
-                    loop
-                    muted
-                    playsinline
-                    preload="auto"
-                    class="adaptive-video autoplay"
-                    style="--aspect-ratio:16/9"
-                    data-hdr-src="vid/elden_ring_controller_sit_demo_hdr_dynamic_agtm.mp4"
-                    data-sdr-src="vid/elden_ring_controller_sit_demo_sdr.mp4">
-                </video>
-
-                <p>test3</p>
-                <ol>
-                    <li>test4</li>
-                    <li>test4</li>
-                    <li>test4</li>
-                    <li>test4</li>
-                    <li>test4</li>
-                    <li>test4</li>
-                    <li>test4</li>
-                    <li>test4</li>
-                    <li>test4</li>
-                    <li>test4</li>
-                    <li>test4</li>
-                    <li>test4</li>
-                    <li>test4</li>
-                    <li>test4</li>
-                    <li>test4</li>
-                </ol>
-
-
-            </section>
-        </article>
+        <div id="gateway-container">
+            <!-- Gateway cards will be inserted here -->
+        </div>
     </main>
 
-    <!-- <footer> -->
-    <!--     <p>&copy; 2026 bpplays.github.io</p> -->
-    <!-- </footer> -->
+    <script>
+        const REFRESH_INTERVAL_MS = 3000;
 
+        function getStatusColor(status) {
+            switch (status.toLowerCase()) {
+                case 'online': return {'bg': '#1a4b2e', 'text': '#a6db7a', 'border': '#40915c'};
+                case 'offline': return {'bg': '#4b1a1a', 'text': '#f38ba8', 'border': '#f38ba8'};
+                default: return {'bg': '#2d2a0e', 'text': '#f9e2af', 'border': '#f9e2af'};
+            }
+        }
 
-    <!-- <script src="../../scripts/utils/video_update.js"></script> -->
+        function getStatusIcon(status) {
+            switch (status.toLowerCase()) {
+                case 'online': 
+                    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                case 'offline': 
+                    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+                default: 
+                    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+            }
+        }
+
+        function createGatewayCard(gateway) {
+            const color = getStatusColor(gateway.status);
+            return `
+                <div class="gateway-card online">
+                    <div class="gateway-header">
+                        <span class="gateway-name">${gateway.name}</span>
+                        <span class="status-badge" style="background: ${color.bg}; color: ${color.text}; border-color: ${color.border}">
+                            ${getStatusIcon(gateway.status)}
+                            ${gateway.status}
+                        </span>
+                    </div>
+                    <div class="gateway-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Latency</span>
+                            <span class="stat-value" style="color: ${gateway.latency ? color.text : 'var(--overlay0)'}">${gateway.latency || 'N/A'}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Loss</span>
+                            <span class="stat-value" style="color: ${gateway.loss ? color.text : 'var(--overlay0)'}">${gateway.loss || 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createGatewayGroup(group, aggregatedData) {
+            const aggregatedColor = getStatusColor(aggregatedData.status);
+            return `
+                <div class="gateway-group">
+                    <div class="group-header" style="color: ${aggregatedColor.text}">
+                        <h3>${group.name}</h3>
+                        <span class="status-badge group-status" style="background: ${aggregatedColor.bg}; color: ${aggregatedColor.text}; border-color: ${aggregatedColor.border}">
+                            ${getStatusIcon(aggregatedData.status)}
+                            ${aggregatedData.status}
+                        </span>
+                    </div>
+                    <div class="group-stats" style="color: var(--text_unimp)">
+                        <div class="stat-item">
+                            <span class="stat-label">Avg Latency</span>
+                            <span class="stat-value">${aggregatedData.latency || 'N/A'}</span>
+                        </div>
+                        ${aggregatedData.loss ? `
+                            <div class="stat-item">
+                                <span class="stat-label">Avg Loss</span>
+                                <span class="stat-value">${aggregatedData.loss}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="gateway-cards">
+                        ${group.gateways.map(createGatewayCard).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderGatewayData(data) {
+            const container = document.getElementById('gateway-container');
+            
+            if (!data || Object.keys(data).length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No gateway data available</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = Object.entries(data).map(([name, agData]) => createGatewayGroup(agData, agData)).join('');
+            container.innerHTML = html;
+        }
+
+        async function fetchGateways() {
+            try {
+                const response = await fetch('/gateways');
+                if (response.ok) {
+                    const data = await response.json();
+                    renderGatewayData(data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch gateway data:', error);
+            }
+        }
+
+        // Initial load and interval refresh
+        fetchGateways();
+        setInterval(fetchGateways, REFRESH_INTERVAL_MS);
+    </script>
 </body>
 </html>
-
