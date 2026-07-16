@@ -96,7 +96,7 @@ impl From<GatewayResponse> for GatewayStatus {
         };
 
         let loss = if response.loss == "~" {
-            None 
+            None
         } else {
             Some(response.loss)
         };
@@ -114,7 +114,7 @@ impl From<GatewayResponse> for GatewayStatus {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    println!("start");
+    println!("start with config: {}", args.config.to_string());
 
     let config_content = std::fs::read_to_string(&args.config)
         .expect("Failed to read config file");
@@ -132,8 +132,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let app = Router::new()
-        .route("/health", get(health_check))
-        .route("/gateways", get(get_gateways))
+        .route("/api/gateways", get(get_gateways))
+        .route("/gateways", get(gateways_page))
         .route("/page-gateways", get(gateways_page))
         .with_state(app_state);
 
@@ -165,7 +165,7 @@ async fn get_gateways(State(state): State<AppState>) -> impl IntoResponse {
 }
 
 async fn gateways_page() -> impl IntoResponse {
-    Html(Html(include_str!("../web/gateways.html").to_string()))
+    Html(include_str!("../web/gateways.html").to_string())
 }
 
 async fn fetch_gateways(
@@ -216,7 +216,7 @@ fn calculate_aggregates(gateways: &[GatewayStatus]) -> (Option<String>, Option<S
     }
 
     let use_median = gateways.len() >= 3;
-    
+
     let delays: Vec<Option<f64>> = gateways
         .iter()
         .filter_map(|g| {
@@ -228,7 +228,7 @@ fn calculate_aggregates(gateways: &[GatewayStatus]) -> (Option<String>, Option<S
             None
         })
         .collect();
-    
+
     let losses: Vec<Option<f64>> = gateways
         .iter()
         .filter_map(|g| {
@@ -240,7 +240,7 @@ fn calculate_aggregates(gateways: &[GatewayStatus]) -> (Option<String>, Option<S
             None
         })
         .collect();
-    
+
     let avg_delay = if !delays.is_empty() {
         let value = if use_median && delays.len() >= 3 {
             calculate_median(&delays)
@@ -251,7 +251,7 @@ fn calculate_aggregates(gateways: &[GatewayStatus]) -> (Option<String>, Option<S
     } else {
         None
     };
-    
+
     let avg_loss = if !losses.is_empty() {
         let value = if use_median && losses.len() >= 3 {
             calculate_median(&losses)
@@ -270,7 +270,7 @@ fn calculate_mean(values: &[Option<f64>]) -> f64 {
     if values.is_empty() {
         return 0.0;
     }
-    
+
     let sum: f64 = values.iter().filter_map(|v| *v).sum();
     sum / values.len() as f64
 }
@@ -279,7 +279,7 @@ fn calculate_median(values: &[Option<f64>]) -> f64 {
     if values.is_empty() {
         return 0.0;
     }
-    
+
     let mut sorted_values = values.iter().filter_map(|v| *v).collect::<Vec<f64>>();
     sorted_values.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
