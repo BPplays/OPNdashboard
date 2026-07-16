@@ -1,0 +1,344 @@
+/* Basic styling for the GitHub Pages blog */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --crust:      #11111b;
+    --mantle:      #181825;
+    --bg:      #1e1e2e;
+    --surface: #181818;
+    --surface0: #313244;
+    --surface1: #45475a;
+    --surface2: #585b70;
+
+    --overlay0: #6c7086;
+    --overlay1: #7f849c;
+    --overlay2: #9399b2;
+
+    --border:  var(--surface0);
+    --text:    #cdd6f4;
+    --text_unimp:    #a6adc8;
+    --text_dark:    var(--bg);
+    --muted:   var(--text_unimp);
+    --pink: #f5c2e7;
+    --accent:  var(--pink);
+    --radius:  0.5rem;
+    --gap:     3px;
+
+
+    --blue: #89b4fa;
+    --red: #f38ba8;
+
+
+
+    --primary:     var(--pink);
+    --secondary:     var(--green);
+
+    --color_warn:     var(--red);
+
+
+    --link:  var(--pink);
+
+    --scroll-track: var(--mantle);
+    --scroll-thumb: var(--surface1);
+    --scroll-thumb-hover: var(--surface2);
+}
+
+html, body {
+    height: 100%;
+    background: var(--mantle);
+    color: var(--text);
+    font-family: 'Inter', "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+header {
+    display: flex; align-items: baseline; gap: 14px;
+    /* padding: 20px 24px 14px; */
+    border-bottom: 1px solid var(--border);
+    /*position: sticky; top: 0;*/
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+header h1    { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; color: var(--accent); }
+header .count { font-size: 0.8rem; color: var(--muted); }
+
+nav ul {
+    list-style: none;
+    display: flex;
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+    gap: 2rem;
+
+}
+
+nav a {
+    color: var(--text);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+nav a:hover {
+    background-color: #34495e;
+
+}
+
+main {
+    max-width: 64rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 1rem;
+    border-radius: var(--radius);
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--mantle) 20%, transparent);
+
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+
+article {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+video {
+    border-radius: var(--radius);
+}
+
+a {
+    background: var(--bg);
+    color: var(--link);
+    font-family: 'Inter', "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+code {
+    border-radius: 4px;
+    padding-left: 0.15rem;
+    padding-right: 0.15rem;
+
+    background: var(--surface0);
+    color: var(--text);
+    font-family: 'Inter', "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.hero {
+    text-align: center;
+    padding: 2rem 0;
+
+}
+
+.hero h2 {
+    margin-bottom: 0.5rem;
+
+}
+
+.blog-header {
+    text-align: center;
+    padding: 2rem 0;
+
+}
+
+.article-list {
+    padding: 1rem 0;
+
+}
+
+.article-list article {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid #eee;
+
+}
+
+.article-list article:last-child {
+    border-bottom: none;
+
+}
+
+.article-list h3 {
+    margin-top: 0;
+
+}
+
+.article-list a {
+    text-decoration: none;
+    font-size: 1.2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+
+    background: var(--bg);
+    color: var(--blue);
+}
+
+.article-list a:hover {
+    text-decoration: underline;
+
+}
+
+.blog-post {
+    padding: 0.8rem 0;
+
+}
+
+.blog-post header {
+    margin-bottom: 2rem;
+    padding-top: 0.0rem;
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+
+}
+
+.content section {
+    padding-top: 0.0rem;
+    padding-right: 0.2rem;
+    padding-left: 0.2rem;
+    padding-bottom: 0.0rem;
+
+}
+
+.meta {
+    font-size: 0.9rem;
+
+}
+
+.content h1, .content h2, .content h3 {
+    margin-top: 1rem;
+    margin-bottom: 0.3rem;
+
+}
+
+.content p {
+    margin-bottom: 0rem;
+}
+
+p.warning {
+    background-color: var(--color_warn);
+    color: var(--text_dark);
+    padding: 0.65rem;
+    border-radius: var(--radius);
+}
+
+/*.warning {
+    color: var(--color_warn);
+}*/
+
+.content ul, .content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+
+}
+
+.content li {
+    margin-bottom: 0.5rem;
+
+}
+
+footer {
+    text-align: center;
+    padding: 2rem 0;
+    margin-top: 2rem;
+
+    background: var(--bg);
+    color: var(--blue);
+    font-family: 'Inter', "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.adaptive-video {
+
+    text-align: center;
+    justify-content: center;
+
+    display: block;
+    width: 100%;
+    aspect-ratio: var(--aspect-ratio);
+    object-fit: cover;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--surface0) 25%,
+            var(--surface1) 50%,
+            var(--surface0) 75%
+        );
+    background-size: 200% 100%;
+
+    animation: skeleton 1.5s linear infinite;
+}
+
+.adaptive-video.loaded {
+    background: none;
+    animation: none;
+}
+
+@keyframes skeleton {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+}
+
+.adaptive-video-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.adaptive-video-wrapper video {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.adaptive-video-wrapper video:not(:first-child) {
+    position: absolute;
+    inset: 0;
+}
+
+.active {
+    opacity: 1;
+    transition: opacity 150ms;
+}
+
+.inactive {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms;
+}
+
+
+
+/* scroll bar */
+
+::-webkit-scrollbar {
+    width: 0.5rem;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--scroll-track);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb);
+    border-radius: 9999px;
+    border: 2px solid var(--scroll-track);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--scroll-thumb-hover);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    html {
+        scrollbar-width: thin;
+        scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+        scrollbar-
+    }
+}
+
