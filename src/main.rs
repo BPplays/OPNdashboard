@@ -156,7 +156,7 @@ async fn get_gateways(State(state): State<AppState>) -> impl IntoResponse {
     let mut response = HashMap::<String, AggregatedGateway>::new();
 
     for gateway_config in &state.config.gateways {
-        let gateways = fetch_gateways(&state.client, &state.config.opnsense.url, &gateway_config.gateway_names).await;
+        let gateways = fetch_gateways(&state.client, &state.config.opnsense.url, &state.config.opnsense.api_key, &state.config.opnsense.api_secret, &gateway_config.gateway_names).await;
         let agated_gateway = aggregate_gateway_data(gateway_config.name.clone(), gateways);
         response.insert(gateway_config.name.clone(), agated_gateway);
     }
@@ -171,12 +171,15 @@ async fn gateways_page() -> impl IntoResponse {
 async fn fetch_gateways(
     client: &reqwest::Client,
     opn_url: &str,
+    api_key: &str,
+    api_secret: &str,
     gateway_names: &[String],
 ) -> Vec<GatewayResponse> {
     let full_url = format!("{}/api/routing/settings/search_gateway/", opn_url);
 
     let response = client
         .get(&full_url)
+        .basic_auth(api_key, Some(api_secret))
         .send()
         .await
         .expect("Failed to send request");
