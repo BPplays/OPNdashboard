@@ -115,6 +115,8 @@ impl From<GatewayResponse> for GatewayStatus {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let args = Args::parse();
 
+	println!("start");
+
 	// Read configuration from file
 	let config_content = std::fs::read_to_string(&args.config)
 		.expect("Failed to read config file");
