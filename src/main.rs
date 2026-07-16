@@ -1,6 +1,6 @@
 use axum::{
     extract::State,
-    http::StatusCode,
+    http::{self, StatusCode, response::Response as AxumMimeResponse},
     response::{IntoResponse, Html},
     routing::get,
     Json, Router,
@@ -164,7 +164,12 @@ async fn gateways_page() -> impl IntoResponse {
 }
 
 async fn gateways_css() -> impl IntoResponse {
-    Css(include_str!("../web/gateways/gateways.css").to_string())
+    let mut resp = AxumMimeResponse::new(include_str!("../web/gateways/gateways.css").to_string());
+    resp.headers_mut().insert(
+        http::header::CONTENT_TYPE,
+        "text/css; charset=utf-8".parse().unwrap(),
+    );
+    resp
 }
 
 async fn fetch_gateways(

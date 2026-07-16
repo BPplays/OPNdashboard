@@ -21,11 +21,11 @@
 </head>
 <body>
 
-    <header>
-        <nav>
-            <a href="/page-gateways" class="active">Gateways</a>
-        </nav>
-    </header>
+    <!-- <header> -->
+    <!--     <nav> -->
+    <!--         <a href="/page-gateways" class="active">Gateways</a> -->
+    <!--     </nav> -->
+    <!-- </header> -->
 
     <main>
         <div class="blog-header">
@@ -43,8 +43,16 @@
 
         function getStatusColor(status) {
             switch (status.toLowerCase()) {
-                case 'online': return {'bg': '#1a4b2e', 'text': '#a6db7a', 'border': '#40915c'};
-                case 'offline': return {'bg': '#4b1a1a', 'text': '#f38ba8', 'border': '#f38ba8'};
+                case 'online': return {'bg': 'var(--green)', 'text': 'var(--text_dark)', 'border': 'var(--green)'};
+                case 'offline': return {'bg': 'var(--color_warn)', 'text': 'var(--text_dark)', 'border': 'var(--color_warn)'};
+                default: return {'bg': '#2d2a0e', 'text': '#f9e2af', 'border': '#f9e2af'};
+            }
+        }
+
+        function getStatusColorTextOnly(status) {
+            switch (status.toLowerCase()) {
+                case 'online': return {'bg': 'var(--bg)', 'text': 'var(--green)', 'border': 'var(--green)'};
+                case 'offline': return {'bg': 'var(--bg)', 'text': 'var(--color_warn)', 'border': 'var(--color_warn)'};
                 default: return {'bg': '#2d2a0e', 'text': '#f9e2af', 'border': '#f9e2af'};
             }
         }
@@ -62,6 +70,8 @@
 
         function createGatewayCard(gateway) {
             const color = getStatusColor(gateway.status);
+            const colort = getStatusColorTextOnly(gateway.status);
+
             return `
                 <div class="gateway-card online">
                     <div class="gateway-header">
@@ -74,11 +84,11 @@
                     <div class="gateway-stats">
                         <div class="stat-item">
                             <span class="stat-label">Latency</span>
-                            <span class="stat-value" style="color: ${gateway.latency ? color.text : 'var(--overlay0)'}">${gateway.latency || 'N/A'}</span>
+                            <span class="stat-value" style="color: ${gateway.latency ? colort.text : 'var(--overlay0)'}">${gateway.latency || 'N/A'}</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Loss</span>
-                            <span class="stat-value" style="color: ${gateway.loss ? color.text : 'var(--overlay0)'}">${gateway.loss || 'N/A'}</span>
+                            <span class="stat-value" style="color: ${gateway.loss ? colort.text : 'var(--overlay0)'}">${gateway.loss || 'N/A'}</span>
                         </div>
                     </div>
                 </div>
@@ -87,9 +97,10 @@
 
         function createGatewayGroup(group, aggregatedData) {
             const aggregatedColor = getStatusColor(aggregatedData.status);
+            const aggregatedColort = getStatusColorTextOnly(aggregatedData.status);
             return `
                 <div class="gateway-group">
-                    <div class="group-header" style="color: ${aggregatedColor.text}">
+                    <div class="group-header" style="color: ${aggregatedColort.text}">
                         <h3>${group.name}</h3>
                         <span class="status-badge group-status" style="background: ${aggregatedColor.bg}; color: ${aggregatedColor.text}; border-color: ${aggregatedColor.border}">
                             ${getStatusIcon(aggregatedData.status)}

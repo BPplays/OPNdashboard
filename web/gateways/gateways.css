@@ -118,6 +118,10 @@ code {
     font-family: 'Inter', "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+#gateway-container {
+    padding-bottom: 0.1rem;
+}
+
 .blog-header {
     text-align: center;
     padding: 2rem 0;
