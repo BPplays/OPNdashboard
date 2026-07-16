@@ -30,7 +30,7 @@
     <main>
         <div class="blog-header">
             <h2>Network Gateway Status</h2>
-            <p class="meta">Auto-refreshing every 3 seconds</p>
+            <p class="meta">Auto-refreshing every second</p>
         </div>
 
         <div id="gateway-container">
@@ -39,7 +39,7 @@
     </main>
 
     <script>
-        const REFRESH_INTERVAL_MS = 3000;
+        const REFRESH_INTERVAL_MS = 1000;
 
         function getStatusColor(status) {
             switch (status.toLowerCase()) {
