@@ -181,6 +181,8 @@ async fn fetch_gateways(
 ) -> Vec<GatewayResponse> {
     let full_url = format!("{}/api/routing/settings/search_gateway/", opn_url);
 
+    println!("url: {}", full_url);
+
     let response = client
         .get(&full_url)
         .basic_auth(api_key, Some(api_secret))
