@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gateway Dashboard</title>
-    <link rel="stylesheet" href="./gateways.css">
+    <link rel="stylesheet" href="./gateways/gateways.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,11 +51,11 @@
 
         function getStatusIcon(status) {
             switch (status.toLowerCase()) {
-                case 'online': 
+                case 'online':
                     return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-                case 'offline': 
+                case 'offline':
                     return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-                default: 
+                default:
                     return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
             }
         }
@@ -117,7 +117,7 @@
 
         function renderGatewayData(data) {
             const container = document.getElementById('gateway-container');
-            
+
             if (!data || Object.keys(data).length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
