@@ -133,7 +133,7 @@
 
         async function fetchGateways() {
             try {
-                const response = await fetch('/gateways');
+                const response = await fetch('/api/gateways');
                 if (response.ok) {
                     const data = await response.json();
                     renderGatewayData(data);
