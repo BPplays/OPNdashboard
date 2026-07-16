@@ -129,7 +129,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .route("/api/gateways", get(get_gateways))
         .route("/gateways", get(gateways_page))
-        .route("/page-gateways", get(gateways_page))
+        .route("/gateways/gateways.css", get(gateways_css))
         .with_state(app_state);
 
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", listen_addr, port))
@@ -160,7 +160,11 @@ async fn get_gateways(State(state): State<AppState>) -> impl IntoResponse {
 }
 
 async fn gateways_page() -> impl IntoResponse {
-    Html(include_str!("../web/gateways.html").to_string())
+    Html(include_str!("../web/gateways/index.html").to_string())
+}
+
+async fn gateways_css() -> impl IntoResponse {
+    Css(include_str!("../web/gateways/gateways.css").to_string())
 }
 
 async fn fetch_gateways(
