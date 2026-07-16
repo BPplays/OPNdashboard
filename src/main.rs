@@ -59,11 +59,6 @@ struct GatewayResponse {
     loss: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-struct GatewayApiResult {
-    rows: Vec<GatewayResponse>,
-}
-
 #[derive(Debug, Clone)]
 struct AppState {
     config: Config,
@@ -184,7 +179,16 @@ async fn fetch_gateways(
         .await
         .expect("Failed to send request");
 
-    let result: GatewayApiResult = response.json().await.expect("Failed to parse JSON");
+    let body = response.text().await.expect("Failed to read body");
+    println!("OPNsense API response: {}", body);
+
+    #[derive(Debug, Deserialize)]
+    struct GatewayApiResult {
+        rows: Vec<GatewayResponse>,
+    }
+
+    let result: GatewayApiResult = serde_json::from_str(&body)
+        .expect("Failed to parse JSON");
 
     result.rows.into_iter()
         .filter(|row| gateway_names.contains(&row.name))
