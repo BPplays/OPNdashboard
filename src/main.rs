@@ -8,6 +8,10 @@ use axum::{
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::time::{Duration, Instant};
+use std::{
+    sync::{LazyLock, Mutex},
+};
 
 #[derive(Parser, Debug)]
 #[command(name = "opn-dashboard")]
@@ -43,7 +47,38 @@ struct Config {
     server: Option<ServerConfig>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+struct CacheEntry<T> {
+    value: T,
+    expires_at: Instant,
+}
+
+impl<T> CacheEntry<T> {
+    fn new(value: T, ttl: Duration) -> Self {
+        Self {
+            value,
+            expires_at: Instant::now() + ttl,
+        }
+    }
+
+    fn expired(&self) -> bool {
+        Instant::now() >= self.expires_at
+    }
+
+    fn get(&self) -> Option<&T> {
+        if self.expired() {
+            None
+        } else {
+            Some(&self.value)
+        }
+    }
+}
+
+static GATEWAY_CACHE: LazyLock<Mutex<Option<CacheEntry<Vec<GatewayResponse>>>>> =
+    LazyLock::new(|| Mutex::new(None));
+
+
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 struct GatewayResponse {
     disabled: bool,
     name: String,
@@ -172,6 +207,7 @@ async fn gateways_css() -> impl IntoResponse {
     resp
 }
 
+
 async fn fetch_gateways(
     client: &reqwest::Client,
     opn_url: &str,
@@ -179,9 +215,22 @@ async fn fetch_gateways(
     api_secret: &str,
     gateway_names: &[String],
 ) -> Vec<GatewayResponse> {
+    {
+        let mut cache = GATEWAY_CACHE.lock().unwrap();
+
+        if let Some(entry) = cache.as_ref() {
+            if !entry.expired() {
+                println!("[cache] hit");
+                return entry.value.clone();
+            } else {
+                println!("[cache] expired");
+            }
+        }
+    }
+
     let full_url = format!("{}/api/routing/settings/search_gateway/", opn_url);
 
-    println!("url: {}", full_url);
+    //println!("url: {}", full_url);
 
     let response = client
         .get(&full_url)
@@ -191,7 +240,7 @@ async fn fetch_gateways(
         .expect("Failed to send request");
 
     let body = response.text().await.expect("Failed to read body");
-    println!("OPNsense API response: {}", body);
+    //println!("OPNsense API response: {}", body);
 
     #[derive(Debug, Deserialize)]
     struct GatewayApiResult {
@@ -201,9 +250,19 @@ async fn fetch_gateways(
     let result: GatewayApiResult = serde_json::from_str(&body)
         .expect("Failed to parse JSON");
 
-    result.rows.into_iter()
+    let resp: Vec<GatewayResponse> = result.rows.into_iter()
         .filter(|row| gateway_names.contains(&row.name))
-        .collect()
+        .collect();
+
+
+    {
+        let mut cache = GATEWAY_CACHE.lock().unwrap();
+        *cache = Some(CacheEntry::new(
+                resp.clone(),
+                Duration::from_millis(250),
+        ));
+    }
+    return resp
 }
 
 fn aggregate_gateway_data(name: String, gateways: Vec<GatewayResponse>) -> AggregatedGateway {
