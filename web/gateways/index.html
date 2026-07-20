@@ -188,7 +188,7 @@
                 return;
             }
 
-            console.log(data)
+            // console.log(data)
             const html = data.map(([name, agData]) => createGatewayGroup(agData, agData)).join('');
             container.innerHTML = html;
         }
