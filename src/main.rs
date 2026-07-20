@@ -12,6 +12,7 @@ use std::time::{Duration, Instant};
 use std::{
     sync::{LazyLock, Mutex},
 };
+use strsim::jaro_winkler;
 
 #[derive(Parser, Debug)]
 #[command(name = "opn-dashboard")]
@@ -274,16 +275,50 @@ async fn fetch_gateways(
         .collect();
 }
 
+fn aggregate_gateway_status(gateway_statuses: &Vec<GatewayStatus>) -> String {
+    let weights: HashMap<&str, i64> = HashMap::from([
+        ("Offline", 100),
+        ("*", 0),
+        ("Online", -100),
+    ]);
+
+    let status = gateway_statuses
+        .iter()
+        .max_by_key(|g| weights.get(g.status.as_str()).copied().unwrap_or(0))
+        .map(|g| g.status.clone())
+        .unwrap_or_else(|| "*".to_string());
+
+    println!("{}", status);
+    let mut status = if status == "*" {
+        gateway_statuses
+            .iter()
+            .max_by(|a, b| {
+                let a_score: f64 = gateway_statuses
+                    .iter()
+                    .map(|g| jaro_winkler(&a.status, &g.status))
+                    .sum();
+
+                let b_score: f64 = gateway_statuses
+                    .iter()
+                    .map(|g| jaro_winkler(&b.status, &g.status))
+                    .sum();
+
+                a_score.partial_cmp(&b_score).unwrap()
+            })
+            .map(|g| g.status.clone())
+            .unwrap_or_else(|| "*".to_string())
+    } else {
+        status
+    };
+
+    if status == "*" { status = "Unknown".to_string() }
+    return status
+}
+
 fn aggregate_gateway_data(name: String, gateways: Vec<GatewayResponse>) -> AggregatedGateway {
     let gateway_statuses: Vec<GatewayStatus> = gateways.into_iter().map(|g| g.into()).collect();
 
-    let status = if gateway_statuses.iter().any(|g| g.status == "Offline") {
-        "Offline".to_string()
-    } else if gateway_statuses.iter().any(|g| g.status == "Online") {
-        "Online".to_string()
-    } else {
-        "Unknown".to_string()
-    };
+    let status = aggregate_gateway_status(&gateway_statuses);
 
     let (avg_delay, avg_loss) = calculate_aggregates(&gateway_statuses);
 
@@ -376,3 +411,75 @@ fn calculate_median(values: &[Option<f64>]) -> f64 {
         sorted_values[len / 2]
     }
 }
+
+
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn gateway(status: &str) -> GatewayStatus {
+        GatewayStatus {
+            name: "test_gateway".to_string(),
+            status: status.to_string(),
+            latency: None,
+            loss: None,
+        }
+    }
+
+    #[test]
+    fn test_offline_has_highest_priority() {
+        let statuses = vec![
+            gateway("Online"),
+            gateway("Offline"),
+            gateway("Unknown"),
+        ];
+
+        assert_eq!(aggregate_gateway_status(&statuses), "Offline");
+    }
+
+    #[test]
+    fn test_online_when_no_offline_exists() {
+        let statuses = vec![
+            gateway("Online"),
+        ];
+
+        assert_eq!(aggregate_gateway_status(&statuses), "Online");
+    }
+
+
+    #[test]
+    fn test_jaro1() {
+        let statuses = vec![
+            gateway("latency"),
+            gateway("latency"),
+            gateway("latency"),
+            gateway("latency"),
+            gateway("latency"),
+            gateway("packetloss"),
+        ];
+
+        assert_eq!(aggregate_gateway_status(&statuses), "latency");
+    }
+
+    #[test]
+    fn test_unknown_when_empty() {
+        let statuses: Vec<GatewayStatus> = Vec::new();
+
+        assert_eq!(aggregate_gateway_status(&statuses), "Unknown");
+    }
+
+    #[test]
+    fn test_order() {
+        let statuses = vec![
+            gateway("online"),
+            gateway("test"),
+        ];
+
+        assert_eq!(aggregate_gateway_status(&statuses), "test");
+    }
+}
+
+
