@@ -278,37 +278,53 @@ async fn fetch_gateways(
 fn aggregate_gateway_status(gateway_statuses: &Vec<GatewayStatus>) -> String {
     let weights: HashMap<&str, i64> = HashMap::from([
         ("Offline", 100),
+        ("*", 0),       // unknowns go here
         ("Online", -100),
     ]);
 
-    let status = gateway_statuses
+    let normalized_statuses: Vec<(&GatewayStatus, &str)> = gateway_statuses
         .iter()
-        .filter(|g| weights.contains_key(g.status.as_str()))
-        .max_by_key(|g| weights[g.status.as_str()])
-        .map(|g| g.status.clone());
+        .map(|g| {
+            if weights.contains_key(g.status.as_str()) {
+                (g, g.status.as_str())
+            } else {
+                (g, "*")
+            }
+        })
+        .collect();
 
-    let status = match status {
-        Some(status) => status,
-        None => gateway_statuses
-            .iter()
-            .max_by(|a, b| {
-                let a_score: f64 = gateway_statuses
-                    .iter()
-                    .map(|g| jaro_winkler(&a.status, &g.status))
-                    .sum();
+    let status = normalized_statuses
+        .iter()
+        .max_by_key(|(_, status)| weights[status])
+        .map(|(g, status)| (*status, g));
 
-                let b_score: f64 = gateway_statuses
-                    .iter()
-                    .map(|g| jaro_winkler(&b.status, &g.status))
-                    .sum();
+    match status {
+        Some(("*", _)) => {
+            // Only compare unknown statuses
+            gateway_statuses
+                .iter()
+                .filter(|g| !weights.contains_key(g.status.as_str()))
+                .max_by(|a, b| {
+                    let a_score: f64 = gateway_statuses
+                        .iter()
+                        .map(|g| jaro_winkler(&a.status, &g.status))
+                        .sum();
 
-                a_score.partial_cmp(&b_score).unwrap()
-            })
-            .map(|g| g.status.clone())
-            .unwrap_or_else(|| "Unknown".to_string()),
-    };
+                    let b_score: f64 = gateway_statuses
+                        .iter()
+                        .map(|g| jaro_winkler(&b.status, &g.status))
+                        .sum();
 
-    status
+                    a_score.partial_cmp(&b_score).unwrap()
+                })
+                .map(|g| g.status.clone())
+                .unwrap_or_else(|| "Unknown".to_string())
+        }
+
+        Some((status, _)) => status.to_string(),
+
+        None => "Unknown".to_string(),
+    }
 }
 
 fn aggregate_gateway_data(name: String, gateways: Vec<GatewayResponse>) -> AggregatedGateway {
@@ -474,6 +490,19 @@ mod tests {
     }
 
     #[test]
+    fn test_jaro3() {
+        let statuses = vec![
+            gateway("latency"),
+            gateway("packetloss"),
+            gateway("packetloss"),
+            gateway("latency, packetloss"),
+            gateway("Online"),
+        ];
+
+        assert_eq!(aggregate_gateway_status(&statuses), "latency");
+    }
+
+    #[test]
     fn test_unknown_when_empty() {
         let statuses: Vec<GatewayStatus> = Vec::new();
 
@@ -483,7 +512,7 @@ mod tests {
     #[test]
     fn test_order() {
         let statuses = vec![
-            gateway("online"),
+            gateway("Online"),
             gateway("test"),
         ];
 
