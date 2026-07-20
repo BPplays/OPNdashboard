@@ -278,19 +278,18 @@ async fn fetch_gateways(
 fn aggregate_gateway_status(gateway_statuses: &Vec<GatewayStatus>) -> String {
     let weights: HashMap<&str, i64> = HashMap::from([
         ("Offline", 100),
-        ("*", 0),
         ("Online", -100),
     ]);
 
     let status = gateway_statuses
         .iter()
-        .max_by_key(|g| weights.get(g.status.as_str()).copied().unwrap_or(0))
-        .map(|g| g.status.clone())
-        .unwrap_or_else(|| "*".to_string());
+        .filter(|g| weights.contains_key(g.status.as_str()))
+        .max_by_key(|g| weights[g.status.as_str()])
+        .map(|g| g.status.clone());
 
-    println!("{}", status);
-    let mut status = if status == "*" {
-        gateway_statuses
+    let mut status = match status {
+        Some(status) => status,
+        None => gateway_statuses
             .iter()
             .max_by(|a, b| {
                 let a_score: f64 = gateway_statuses
@@ -306,13 +305,10 @@ fn aggregate_gateway_status(gateway_statuses: &Vec<GatewayStatus>) -> String {
                 a_score.partial_cmp(&b_score).unwrap()
             })
             .map(|g| g.status.clone())
-            .unwrap_or_else(|| "*".to_string())
-    } else {
-        status
+            .unwrap_or_else(|| "Unknown".to_string()),
     };
 
-    if status == "*" { status = "Unknown".to_string() }
-    return status
+    status
 }
 
 fn aggregate_gateway_data(name: String, gateways: Vec<GatewayResponse>) -> AggregatedGateway {
@@ -462,6 +458,19 @@ mod tests {
         ];
 
         assert_eq!(aggregate_gateway_status(&statuses), "latency");
+    }
+
+
+    #[test]
+    fn test_jaro2() {
+        let statuses = vec![
+            gateway("latency"),
+            gateway("packetloss"),
+            gateway("packetloss"),
+            gateway("latency, packetloss"),
+        ];
+
+        assert_eq!(aggregate_gateway_status(&statuses), "packetloss");
     }
 
     #[test]
