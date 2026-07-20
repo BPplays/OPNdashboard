@@ -228,6 +228,8 @@ async fn fetch_gateways(
             } else {
                 println!("[cache] expired");
             }
+        } else {
+            println!("[cache] miss");
         }
 
     }
@@ -259,7 +261,7 @@ async fn fetch_gateways(
 
 
     {
-        println!("gw resp: {:#?}", resp);
+        //println!("gw resp: {:#?}", resp);
         let mut cache = GATEWAY_CACHE.lock().unwrap();
         *cache = Some(CacheEntry::new(
                 resp.clone(),
