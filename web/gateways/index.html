@@ -43,17 +43,67 @@
 
         function getStatusColor(status) {
             switch (status.toLowerCase()) {
-                case 'online': return {'bg': 'var(--green)', 'text': 'var(--text_dark)', 'border': 'var(--green)'};
-                case 'offline': return {'bg': 'var(--color_warn)', 'text': 'var(--text_dark)', 'border': 'var(--color_warn)'};
-                default: return {'bg': '#2d2a0e', 'text': '#f9e2af', 'border': '#f9e2af'};
+                case 'online':
+                    return {
+                        bg: 'var(--color_gateway_up)',
+                        text: 'var(--text_dark)',
+                        border: 'var(--color_gateway_up)',
+                    };
+                case 'offline':
+                    return {
+                        bg: 'var(--color_warn)',
+                        text: 'var(--text_dark)',
+                        border: 'var(--color_warn)',
+                    };
+
+                case 'unknown':
+                case 'pending':
+                    return {
+                        bg: 'var(--color_unknown)',
+                        text: 'var(--text_dark)',
+                        border: 'var(--color_unknown)'
+                    };
+                case 'latency':
+                case 'packetloss':
+                case 'latency, packetloss':
+                default:
+                    return {
+                        bg: 'var(--color_warn_mild)',
+                        text: 'var(--text_dark)',
+                        border: 'var(--color_warn_mild)'
+                    };
             }
         }
 
         function getStatusColorTextOnly(status) {
             switch (status.toLowerCase()) {
-                case 'online': return {'bg': 'var(--bg)', 'text': 'var(--green)', 'border': 'var(--green)'};
-                case 'offline': return {'bg': 'var(--bg)', 'text': 'var(--color_warn)', 'border': 'var(--color_warn)'};
-                default: return {'bg': '#2d2a0e', 'text': '#f9e2af', 'border': '#f9e2af'};
+                case 'online': return {
+                    bg: 'var(--bg)',
+                    text: 'var(--color_gateway_up)',
+                    border: 'var(--color_gateway_up)',
+                };
+                case 'offline': return {
+                    bg: 'var(--bg)',
+                    text: 'var(--color_warn)',
+                    border: 'var(--color_warn)',
+                };
+
+                case 'unknown':
+                case 'pending':
+                    return {
+                        bg: 'var(--bg)',
+                        text: 'var(color_unknown)',
+                        border: 'var(--color_unknown)'
+                    };
+                case 'latency':
+                case 'packetloss':
+                case 'latency, packetloss':
+                default:
+                    return {
+                        bg: 'var(--bg)',
+                        text: 'var(color_warn_mild)',
+                        border: 'var(--color_warn_mild)'
+                    };
             }
         }
 

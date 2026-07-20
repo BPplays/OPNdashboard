@@ -30,12 +30,21 @@
     --red: #f38ba8;
 
     --green: #a6d189;
+    --yellow: #f9e2af;
+    --purple: #cba6f7;
 
 
     --primary:     var(--pink);
     --secondary:     var(--green);
 
     --color_warn:     var(--red);
+
+    --color_warn_mild:     var(--yellow);
+    --color_unknown:     var(--purple);
+
+    --color_good:     var(--green);
+
+    --color_gateway_up:     var(--color_good);
 
     --link:  var(--pink);
 
