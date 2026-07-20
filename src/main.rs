@@ -73,8 +73,8 @@ impl<T> CacheEntry<T> {
     }
 }
 
-static GATEWAY_CACHE: LazyLock<Mutex<Option<CacheEntry<Vec<GatewayResponse>>>>> =
-    LazyLock::new(|| Mutex::new(None));
+static GATEWAY_CACHE: LazyLock<Mutex<HashMap<Vec<String>, CacheEntry<Vec<GatewayResponse>>>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 
 
@@ -215,16 +215,20 @@ async fn fetch_gateways(
     api_secret: &str,
     gateway_names: &[String],
 ) -> Vec<GatewayResponse> {
+    let cache_key = gateway_names.to_vec();
     {
-        let mut cache = GATEWAY_CACHE.lock().unwrap();
+        let cache = GATEWAY_CACHE.lock().unwrap();
 
-        if let Some(entry) = cache.as_ref() {
+
+        if let Some(entry) = cache.get(&cache_key) {
             if !entry.expired() {
                 println!("[cache] hit");
                 return entry.value.clone();
             } else {
                 println!("[cache] expired");
             }
+        } else {
+            println!("[cache] miss");
         }
     }
 
@@ -256,11 +260,19 @@ async fn fetch_gateways(
 
 
     {
+        //println!("gw resp: {:#?}", resp);
+
+        let cache_key = gateway_names.to_vec();
+
         let mut cache = GATEWAY_CACHE.lock().unwrap();
-        *cache = Some(CacheEntry::new(
+
+        cache.insert(
+            cache_key,
+            CacheEntry::new(
                 resp.clone(),
                 Duration::from_millis(250),
-        ));
+            ),
+        );
     }
     return resp
 }
