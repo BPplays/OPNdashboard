@@ -73,8 +73,8 @@ impl<T> CacheEntry<T> {
     }
 }
 
-static GATEWAY_CACHE: LazyLock<Mutex<HashMap<Vec<String>, CacheEntry<Vec<GatewayResponse>>>>> =
-    LazyLock::new(|| Mutex::new(HashMap::new()));
+static GATEWAY_CACHE: LazyLock<Mutex<Option<CacheEntry<Vec<GatewayResponse>>>>> =
+    LazyLock::new(|| Mutex::new(None));
 
 
 
@@ -215,21 +215,21 @@ async fn fetch_gateways(
     api_secret: &str,
     gateway_names: &[String],
 ) -> Vec<GatewayResponse> {
-    let cache_key = gateway_names.to_vec();
     {
         let cache = GATEWAY_CACHE.lock().unwrap();
 
-
-        if let Some(entry) = cache.get(&cache_key) {
+        if let Some(entry) = cache.as_ref() {
             if !entry.expired() {
                 println!("[cache] hit");
-                return entry.value.clone();
+
+                return entry.value.clone().into_iter()
+                    .filter(|row| gateway_names.contains(&row.name))
+                    .collect();
             } else {
                 println!("[cache] expired");
             }
-        } else {
-            println!("[cache] miss");
         }
+
     }
 
     let full_url = format!("{}/api/routing/settings/search_gateway/", opn_url);
@@ -255,26 +255,21 @@ async fn fetch_gateways(
         .expect("Failed to parse JSON");
 
     let resp: Vec<GatewayResponse> = result.rows.into_iter()
-        .filter(|row| gateway_names.contains(&row.name))
         .collect();
 
 
     {
-        //println!("gw resp: {:#?}", resp);
-
-        let cache_key = gateway_names.to_vec();
-
+        println!("gw resp: {:#?}", resp);
         let mut cache = GATEWAY_CACHE.lock().unwrap();
-
-        cache.insert(
-            cache_key,
-            CacheEntry::new(
+        *cache = Some(CacheEntry::new(
                 resp.clone(),
                 Duration::from_millis(250),
-            ),
-        );
+        ));
     }
-    return resp
+
+    return resp.into_iter()
+        .filter(|row| gateway_names.contains(&row.name))
+        .collect();
 }
 
 fn aggregate_gateway_data(name: String, gateways: Vec<GatewayResponse>) -> AggregatedGateway {
