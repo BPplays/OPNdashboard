@@ -287,7 +287,7 @@ fn aggregate_gateway_status(gateway_statuses: &Vec<GatewayStatus>) -> String {
         .max_by_key(|g| weights[g.status.as_str()])
         .map(|g| g.status.clone());
 
-    let mut status = match status {
+    let status = match status {
         Some(status) => status,
         None => gateway_statuses
             .iter()
