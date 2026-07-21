@@ -101,7 +101,7 @@ struct AppState {
     client: reqwest::Client,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 struct AggregatedGateway {
     name: String,
     status: String,
@@ -110,7 +110,7 @@ struct AggregatedGateway {
     gateways: Vec<GatewayStatus>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 struct GatewayStatus {
     name: String,
     status: String,
@@ -281,6 +281,15 @@ fn aggregate_gateway_status(gateway_statuses: &Vec<GatewayStatus>) -> String {
         ("*", 0),       // unknowns go here
         ("Online", -100),
     ]);
+
+    // let gateway_statuses: Vec<GatewayStatus> = gateway_statuses
+    //     .iter()
+    //     .cloned()
+    //     .map(|mut s| {
+    //         s.status = s.status.to_lowercase();
+    //         s
+    //     })
+    //     .collect();
 
     let normalized_statuses: Vec<(&GatewayStatus, &str)> = gateway_statuses
         .iter()
