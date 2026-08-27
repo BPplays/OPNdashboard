@@ -1,444 +1,444 @@
 use axum::{
-    extract::State,
-    http::{self, StatusCode, response::Response as AxumMimeResponse},
-    response::{IntoResponse, Html},
-    routing::get,
-    Json, Router,
+	extract::State,
+	http::{self, StatusCode, response::Response as AxumMimeResponse},
+	response::{IntoResponse, Html},
+	routing::get,
+	Json, Router,
 };
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 use std::{
-    sync::{LazyLock, Mutex},
+	sync::{LazyLock, Mutex},
 };
 use strsim::jaro_winkler;
 
 #[derive(Parser, Debug)]
 #[command(name = "opn-dashboard")]
 struct Args {
-    /// Path to configuration file
-    #[arg(short, long, default_value = "config.yaml")]
-    config: String,
+	/// Path to configuration file
+	#[arg(short, long, default_value = "config.yaml")]
+	config: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct GatewayConfig {
-    name: String,
-    gateway_names: Vec<String>,
+	name: String,
+	gateway_names: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct OpnsenseConfig {
-    url: String,
-    api_key: String,
-    api_secret: String,
+	url: String,
+	api_key: String,
+	api_secret: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct ServerConfig {
-    listen: Option<String>,
-    port: u16,
+	listen: Option<String>,
+	port: u16,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct Config {
-    gateways: Vec<GatewayConfig>,
-    opnsense: OpnsenseConfig,
-    server: Option<ServerConfig>,
+	gateways: Vec<GatewayConfig>,
+	opnsense: OpnsenseConfig,
+	server: Option<ServerConfig>,
 }
 
 struct CacheEntry<T> {
-    value: T,
-    expires_at: Instant,
+	value: T,
+	expires_at: Instant,
 }
 
 impl<T> CacheEntry<T> {
-    fn new(value: T, ttl: Duration) -> Self {
-        Self {
-            value,
-            expires_at: Instant::now() + ttl,
-        }
-    }
+	fn new(value: T, ttl: Duration) -> Self {
+		Self {
+			value,
+			expires_at: Instant::now() + ttl,
+		}
+	}
 
-    fn expired(&self) -> bool {
-        Instant::now() >= self.expires_at
-    }
+	fn expired(&self) -> bool {
+		Instant::now() >= self.expires_at
+	}
 
-    fn get(&self) -> Option<&T> {
-        if self.expired() {
-            None
-        } else {
-            Some(&self.value)
-        }
-    }
+	fn get(&self) -> Option<&T> {
+		if self.expired() {
+			None
+		} else {
+			Some(&self.value)
+		}
+	}
 }
 
 static GATEWAY_CACHE: LazyLock<Mutex<Option<CacheEntry<Vec<GatewayResponse>>>>> =
-    LazyLock::new(|| Mutex::new(None));
+	LazyLock::new(|| Mutex::new(None));
 
 
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct GatewayResponse {
-    disabled: bool,
-    name: String,
-    #[serde(rename = "ipprotocol")]
-    ip_protocol: String,
-    gateway: String,
-    defaultgw: bool,
-    monitor: String,
-    #[serde(rename = "status")]
-    status_str: String,
-    delay: String,
-    stddev: String,
-    loss: String,
+	disabled: bool,
+	name: String,
+	#[serde(rename = "ipprotocol")]
+	ip_protocol: String,
+	gateway: String,
+	defaultgw: bool,
+	monitor: String,
+	#[serde(rename = "status")]
+	status_str: String,
+	delay: String,
+	stddev: String,
+	loss: String,
 }
 
 #[derive(Debug, Clone)]
 struct AppState {
-    config: Config,
-    client: reqwest::Client,
+	config: Config,
+	client: reqwest::Client,
 }
 
 #[derive(Debug, Serialize, Clone)]
 struct AggregatedGateway {
-    name: String,
-    status: String,
-    latency: Option<String>,
-    loss: Option<String>,
-    gateways: Vec<GatewayStatus>,
+	name: String,
+	status: String,
+	latency: Option<String>,
+	loss: Option<String>,
+	gateways: Vec<GatewayStatus>,
 }
 
 #[derive(Debug, Serialize, Clone)]
 struct GatewayStatus {
-    name: String,
-    status: String,
-    latency: Option<String>,
-    loss: Option<String>,
+	name: String,
+	status: String,
+	latency: Option<String>,
+	loss: Option<String>,
 }
 
 impl From<GatewayResponse> for GatewayStatus {
-    fn from(response: GatewayResponse) -> Self {
-        let delay = if response.delay == "~" {
-            None
-        } else {
-            Some(response.delay)
-        };
+	fn from(response: GatewayResponse) -> Self {
+		let delay = if response.delay == "~" {
+			None
+		} else {
+			Some(response.delay)
+		};
 
-        let loss = if response.loss == "~" {
-            None
-        } else {
-            Some(response.loss)
-        };
+		let loss = if response.loss == "~" {
+			None
+		} else {
+			Some(response.loss)
+		};
 
-        GatewayStatus {
-            name: response.name,
-            status: response.status_str,
-            latency: delay,
-            loss,
-        }
-    }
+		GatewayStatus {
+			name: response.name,
+			status: response.status_str,
+			latency: delay,
+			loss,
+		}
+	}
 }
 
 async fn favicon() -> impl axum::response::IntoResponse {
-    (
-        [(axum::http::header::CONTENT_TYPE, "image/svg+xml")],
-        include_str!("../assets/favicon/graph-16.svg"),
-    )
+	(
+		[(axum::http::header::CONTENT_TYPE, "image/svg+xml")],
+		include_str!("../assets/favicon/graph-16.svg"),
+	)
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args = Args::parse();
+	let args = Args::parse();
 
-    println!("start with config: {}", args.config.to_string());
+	println!("start with config: {}", args.config.to_string());
 
-    let config_content = std::fs::read_to_string(&args.config)
-        .expect("Failed to read config file");
-    let config: Config = serde_yaml::from_str(&config_content)
-        .expect("Failed to parse YAML config");
+	let config_content = std::fs::read_to_string(&args.config)
+		.expect("Failed to read config file");
+	let config: Config = serde_yaml::from_str(&config_content)
+		.expect("Failed to parse YAML config");
 
-    let client = reqwest::Client::new();
-    let app_state = AppState { config, client };
+	let client = reqwest::Client::new();
+	let app_state = AppState { config, client };
 
-    let server_config = &app_state.config.server;
-    let (listen_addr, port) = if let Some(server_config) = server_config {
-        (server_config.listen.clone().unwrap_or_else(|| "[::1]".to_string()), server_config.port)
-    } else {
-        ("[::1]".to_string(), 3000)
-    };
+	let server_config = &app_state.config.server;
+	let (listen_addr, port) = if let Some(server_config) = server_config {
+		(server_config.listen.clone().unwrap_or_else(|| "[::1]".to_string()), server_config.port)
+	} else {
+		("[::1]".to_string(), 3000)
+	};
 
-    let app = Router::new()
-        .route("/favicon.svg", get(favicon))
-        .route("/api/gateways", get(get_gateways))
-        .route("/gateways", get(gateways_page))
-        .route("/gateways/gateways.css", get(gateways_css))
-        .with_state(app_state);
+	let app = Router::new()
+		.route("/favicon.svg", get(favicon))
+		.route("/api/gateways", get(get_gateways))
+		.route("/gateways", get(gateways_page))
+		.route("/gateways/gateways.css", get(gateways_css))
+		.with_state(app_state);
 
-    let listener = tokio::net::TcpListener::bind(format!("{}:{}", listen_addr, port))
-        .await
-        .unwrap();
+	let listener = tokio::net::TcpListener::bind(format!("{}:{}", listen_addr, port))
+		.await
+		.unwrap();
 
-    println!("Server running on http://{}:{}", listen_addr, port);
+	println!("Server running on http://{}:{}", listen_addr, port);
 
-    axum::serve(listener, app).await.unwrap();
+	axum::serve(listener, app).await.unwrap();
 
-    Ok(())
+	Ok(())
 }
 
 async fn health_check() -> impl IntoResponse {
-    StatusCode::OK
+	StatusCode::OK
 }
 
 async fn get_gateways(State(state): State<AppState>) -> impl IntoResponse {
-    let mut response = Vec::<(String, AggregatedGateway)>::new();
+	let mut response = Vec::<(String, AggregatedGateway)>::new();
 
-    for gateway_config in &state.config.gateways {
-        let gateways = fetch_gateways(&state.client, &state.config.opnsense.url, &state.config.opnsense.api_key, &state.config.opnsense.api_secret, &gateway_config.gateway_names).await;
-        let agated_gateway = aggregate_gateway_data(gateway_config.name.clone(), gateways);
-        response.push((gateway_config.name.clone(), agated_gateway));
-    }
+	for gateway_config in &state.config.gateways {
+		let gateways = fetch_gateways(&state.client, &state.config.opnsense.url, &state.config.opnsense.api_key, &state.config.opnsense.api_secret, &gateway_config.gateway_names).await;
+		let agated_gateway = aggregate_gateway_data(gateway_config.name.clone(), gateways);
+		response.push((gateway_config.name.clone(), agated_gateway));
+	}
 
-    Json(response)
+	Json(response)
 }
 
 async fn gateways_page() -> impl IntoResponse {
-    Html(include_str!("../web/gateways/index.html").to_string())
+	Html(include_str!("../web/gateways/index.html").to_string())
 }
 
 async fn gateways_css() -> impl IntoResponse {
-    let mut resp = AxumMimeResponse::new(include_str!("../web/gateways/gateways.css").to_string());
-    resp.headers_mut().insert(
-        http::header::CONTENT_TYPE,
-        "text/css; charset=utf-8".parse().unwrap(),
-    );
-    resp
+	let mut resp = AxumMimeResponse::new(include_str!("../web/gateways/gateways.css").to_string());
+	resp.headers_mut().insert(
+		http::header::CONTENT_TYPE,
+		"text/css; charset=utf-8".parse().unwrap(),
+	);
+	resp
 }
 
 
 async fn fetch_gateways(
-    client: &reqwest::Client,
-    opn_url: &str,
-    api_key: &str,
-    api_secret: &str,
-    gateway_names: &[String],
+	client: &reqwest::Client,
+	opn_url: &str,
+	api_key: &str,
+	api_secret: &str,
+	gateway_names: &[String],
 ) -> Vec<GatewayResponse> {
-    {
-        let cache = GATEWAY_CACHE.lock().unwrap();
+	{
+		let cache = GATEWAY_CACHE.lock().unwrap();
 
-        if let Some(entry) = cache.as_ref() {
-            if !entry.expired() {
-                println!("[cache] hit");
+		if let Some(entry) = cache.as_ref() {
+			if !entry.expired() {
+				println!("[cache] hit");
 
-                return entry.value.clone().into_iter()
-                    .filter(|row| gateway_names.contains(&row.name))
-                    .collect();
-            } else {
-                println!("[cache] expired");
-            }
-        } else {
-            println!("[cache] miss");
-        }
+				return entry.value.clone().into_iter()
+					.filter(|row| gateway_names.contains(&row.name))
+					.collect();
+			} else {
+				println!("[cache] expired");
+			}
+		} else {
+			println!("[cache] miss");
+		}
 
-    }
+	}
 
-    let full_url = format!("{}/api/routing/settings/search_gateway/", opn_url);
+	let full_url = format!("{}/api/routing/settings/search_gateway/", opn_url);
 
-    //println!("url: {}", full_url);
+	//println!("url: {}", full_url);
 
-    let response = client
-        .get(&full_url)
-        .basic_auth(api_key, Some(api_secret))
-        .send()
-        .await
-        .expect("Failed to send request");
+	let response = client
+		.get(&full_url)
+		.basic_auth(api_key, Some(api_secret))
+		.send()
+		.await
+		.expect("Failed to send request");
 
-    let body = response.text().await.expect("Failed to read body");
-    //println!("OPNsense API response: {}", body);
+	let body = response.text().await.expect("Failed to read body");
+	//println!("OPNsense API response: {}", body);
 
-    #[derive(Debug, Deserialize)]
-    struct GatewayApiResult {
-        rows: Vec<GatewayResponse>,
-    }
+	#[derive(Debug, Deserialize)]
+	struct GatewayApiResult {
+		rows: Vec<GatewayResponse>,
+	}
 
-    let result: GatewayApiResult = serde_json::from_str(&body)
-        .expect("Failed to parse JSON");
+	let result: GatewayApiResult = serde_json::from_str(&body)
+		.expect("Failed to parse JSON");
 
-    let resp: Vec<GatewayResponse> = result.rows.into_iter()
-        .collect();
+	let resp: Vec<GatewayResponse> = result.rows.into_iter()
+		.collect();
 
 
-    {
-        //println!("gw resp: {:#?}", resp);
-        let mut cache = GATEWAY_CACHE.lock().unwrap();
-        *cache = Some(CacheEntry::new(
-                resp.clone(),
-                Duration::from_millis(250),
-        ));
-    }
+	{
+		//println!("gw resp: {:#?}", resp);
+		let mut cache = GATEWAY_CACHE.lock().unwrap();
+		*cache = Some(CacheEntry::new(
+				resp.clone(),
+				Duration::from_millis(250),
+		));
+	}
 
-    return resp.into_iter()
-        .filter(|row| gateway_names.contains(&row.name))
-        .collect();
+	return resp.into_iter()
+		.filter(|row| gateway_names.contains(&row.name))
+		.collect();
 }
 
 fn aggregate_gateway_status(gateway_statuses: &Vec<GatewayStatus>) -> String {
-    let weights: HashMap<&str, i64> = HashMap::from([
-        ("Offline", 100),
-        ("*", 0),       // unknowns go here
-        ("Online", -100),
-    ]);
+	let weights: HashMap<&str, i64> = HashMap::from([
+		("Offline", 100),
+		("*", 0),       // unknowns go here
+		("Online", -100),
+	]);
 
-    // let gateway_statuses: Vec<GatewayStatus> = gateway_statuses
-    //     .iter()
-    //     .cloned()
-    //     .map(|mut s| {
-    //         s.status = s.status.to_lowercase();
-    //         s
-    //     })
-    //     .collect();
+	// let gateway_statuses: Vec<GatewayStatus> = gateway_statuses
+	//     .iter()
+	//     .cloned()
+	//     .map(|mut s| {
+	//         s.status = s.status.to_lowercase();
+	//         s
+	//     })
+	//     .collect();
 
-    let normalized_statuses: Vec<(&GatewayStatus, &str)> = gateway_statuses
-        .iter()
-        .map(|g| {
-            if weights.contains_key(g.status.as_str()) {
-                (g, g.status.as_str())
-            } else {
-                (g, "*")
-            }
-        })
-        .collect();
+	let normalized_statuses: Vec<(&GatewayStatus, &str)> = gateway_statuses
+		.iter()
+		.map(|g| {
+			if weights.contains_key(g.status.as_str()) {
+				(g, g.status.as_str())
+			} else {
+				(g, "*")
+			}
+		})
+		.collect();
 
-    let status = normalized_statuses
-        .iter()
-        .max_by_key(|(_, status)| weights[status])
-        .map(|(g, status)| (*status, g));
+	let status = normalized_statuses
+		.iter()
+		.max_by_key(|(_, status)| weights[status])
+		.map(|(g, status)| (*status, g));
 
-    match status {
-        Some(("*", _)) => {
-            // Only compare unknown statuses
-            gateway_statuses
-                .iter()
-                .filter(|g| !weights.contains_key(g.status.as_str()))
-                .max_by(|a, b| {
-                    let a_score: f64 = gateway_statuses
-                        .iter()
-                        .map(|g| jaro_winkler(&a.status, &g.status))
-                        .sum();
+	match status {
+		Some(("*", _)) => {
+			// Only compare unknown statuses
+			gateway_statuses
+				.iter()
+				.filter(|g| !weights.contains_key(g.status.as_str()))
+				.max_by(|a, b| {
+					let a_score: f64 = gateway_statuses
+						.iter()
+						.map(|g| jaro_winkler(&a.status, &g.status))
+						.sum();
 
-                    let b_score: f64 = gateway_statuses
-                        .iter()
-                        .map(|g| jaro_winkler(&b.status, &g.status))
-                        .sum();
+					let b_score: f64 = gateway_statuses
+						.iter()
+						.map(|g| jaro_winkler(&b.status, &g.status))
+						.sum();
 
-                    a_score.partial_cmp(&b_score).unwrap()
-                })
-                .map(|g| g.status.clone())
-                .unwrap_or_else(|| "Unknown".to_string())
-        }
+					a_score.partial_cmp(&b_score).unwrap()
+				})
+				.map(|g| g.status.clone())
+				.unwrap_or_else(|| "Unknown".to_string())
+		}
 
-        Some((status, _)) => status.to_string(),
+		Some((status, _)) => status.to_string(),
 
-        None => "Unknown".to_string(),
-    }
+		None => "Unknown".to_string(),
+	}
 }
 
 fn aggregate_gateway_data(name: String, gateways: Vec<GatewayResponse>) -> AggregatedGateway {
-    let gateway_statuses: Vec<GatewayStatus> = gateways.into_iter().map(|g| g.into()).collect();
+	let gateway_statuses: Vec<GatewayStatus> = gateways.into_iter().map(|g| g.into()).collect();
 
-    let status = aggregate_gateway_status(&gateway_statuses);
+	let status = aggregate_gateway_status(&gateway_statuses);
 
-    let (avg_delay, avg_loss) = calculate_aggregates(&gateway_statuses);
+	let (avg_delay, avg_loss) = calculate_aggregates(&gateway_statuses);
 
-    AggregatedGateway {
-        name,
-        status,
-        latency: avg_delay,
-        loss: avg_loss,
-        gateways: gateway_statuses,
-    }
+	AggregatedGateway {
+		name,
+		status,
+		latency: avg_delay,
+		loss: avg_loss,
+		gateways: gateway_statuses,
+	}
 }
 
 fn calculate_aggregates(gateways: &[GatewayStatus]) -> (Option<String>, Option<String>) {
-    if gateways.is_empty() {
-        return (None, None);
-    }
+	if gateways.is_empty() {
+		return (None, None);
+	}
 
-    let use_median = gateways.len() >= 3;
+	let use_median = gateways.len() >= 3;
 
-    let delays: Vec<Option<f64>> = gateways
-        .iter()
-        .filter_map(|g| {
-            if let Some(delay_str) = &g.latency {
-                if delay_str != "~" {
-                    return Some(delay_str.replace(" ms", "").parse::<f64>().ok());
-                }
-            }
-            None
-        })
-        .collect();
+	let delays: Vec<Option<f64>> = gateways
+		.iter()
+		.filter_map(|g| {
+			if let Some(delay_str) = &g.latency {
+				if delay_str != "~" {
+					return Some(delay_str.replace(" ms", "").parse::<f64>().ok());
+				}
+			}
+			None
+		})
+		.collect();
 
-    let losses: Vec<Option<f64>> = gateways
-        .iter()
-        .filter_map(|g| {
-            if let Some(loss_str) = &g.loss {
-                if loss_str != "~" {
-                    return Some(loss_str.replace(" %", "").parse::<f64>().ok());
-                }
-            }
-            None
-        })
-        .collect();
+	let losses: Vec<Option<f64>> = gateways
+		.iter()
+		.filter_map(|g| {
+			if let Some(loss_str) = &g.loss {
+				if loss_str != "~" {
+					return Some(loss_str.replace(" %", "").parse::<f64>().ok());
+				}
+			}
+			None
+		})
+		.collect();
 
-    let avg_delay = if !delays.is_empty() {
-        let value = if use_median && delays.len() >= 3 {
-            calculate_median(&delays)
-        } else {
-            calculate_mean(&delays)
-        };
-        Some(format!("{:.1} ms", value))
-    } else {
-        None
-    };
+	let avg_delay = if !delays.is_empty() {
+		let value = if use_median && delays.len() >= 3 {
+			calculate_median(&delays)
+		} else {
+			calculate_mean(&delays)
+		};
+		Some(format!("{:.1} ms", value))
+	} else {
+		None
+	};
 
-    let avg_loss = if !losses.is_empty() {
-        let value = if use_median && losses.len() >= 3 {
-            calculate_median(&losses)
-        } else {
-            calculate_mean(&losses)
-        };
-        Some(format!("{:.1} %", value))
-    } else {
-        None
-    };
+	let avg_loss = if !losses.is_empty() {
+		let value = if use_median && losses.len() >= 3 {
+			calculate_median(&losses)
+		} else {
+			calculate_mean(&losses)
+		};
+		Some(format!("{:.1} %", value))
+	} else {
+		None
+	};
 
-    (avg_delay, avg_loss)
+	(avg_delay, avg_loss)
 }
 
 fn calculate_mean(values: &[Option<f64>]) -> f64 {
-    if values.is_empty() {
-        return 0.0;
-    }
+	if values.is_empty() {
+		return 0.0;
+	}
 
-    let sum: f64 = values.iter().filter_map(|v| *v).sum();
-    sum / values.len() as f64
+	let sum: f64 = values.iter().filter_map(|v| *v).sum();
+	sum / values.len() as f64
 }
 
 fn calculate_median(values: &[Option<f64>]) -> f64 {
-    if values.is_empty() {
-        return 0.0;
-    }
+	if values.is_empty() {
+		return 0.0;
+	}
 
-    let mut sorted_values = values.iter().filter_map(|v| *v).collect::<Vec<f64>>();
-    sorted_values.sort_by(|a, b| a.partial_cmp(b).unwrap());
+	let mut sorted_values = values.iter().filter_map(|v| *v).collect::<Vec<f64>>();
+	sorted_values.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-    let len = sorted_values.len();
-    if len % 2 == 0 {
-        (sorted_values[len / 2 - 1] + sorted_values[len / 2]) / 2.0
-    } else {
-        sorted_values[len / 2]
-    }
+	let len = sorted_values.len();
+	if len % 2 == 0 {
+		(sorted_values[len / 2 - 1] + sorted_values[len / 2]) / 2.0
+	} else {
+		sorted_values[len / 2]
+	}
 }
 
 
@@ -447,94 +447,94 @@ fn calculate_median(values: &[Option<f64>]) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+	use super::*;
 
-    fn gateway(status: &str) -> GatewayStatus {
-        GatewayStatus {
-            name: "test_gateway".to_string(),
-            status: status.to_string(),
-            latency: None,
-            loss: None,
-        }
-    }
+	fn gateway(status: &str) -> GatewayStatus {
+		GatewayStatus {
+			name: "test_gateway".to_string(),
+			status: status.to_string(),
+			latency: None,
+			loss: None,
+		}
+	}
 
-    #[test]
-    fn test_offline_has_highest_priority() {
-        let statuses = vec![
-            gateway("Online"),
-            gateway("Offline"),
-            gateway("Unknown"),
-        ];
+	#[test]
+	fn test_offline_has_highest_priority() {
+		let statuses = vec![
+			gateway("Online"),
+			gateway("Offline"),
+			gateway("Unknown"),
+		];
 
-        assert_eq!(aggregate_gateway_status(&statuses), "Offline");
-    }
+		assert_eq!(aggregate_gateway_status(&statuses), "Offline");
+	}
 
-    #[test]
-    fn test_online_when_no_offline_exists() {
-        let statuses = vec![
-            gateway("Online"),
-        ];
+	#[test]
+	fn test_online_when_no_offline_exists() {
+		let statuses = vec![
+			gateway("Online"),
+		];
 
-        assert_eq!(aggregate_gateway_status(&statuses), "Online");
-    }
-
-
-    #[test]
-    fn test_jaro1() {
-        let statuses = vec![
-            gateway("latency"),
-            gateway("latency"),
-            gateway("latency"),
-            gateway("latency"),
-            gateway("latency"),
-            gateway("packetloss"),
-        ];
-
-        assert_eq!(aggregate_gateway_status(&statuses), "latency");
-    }
+		assert_eq!(aggregate_gateway_status(&statuses), "Online");
+	}
 
 
-    #[test]
-    fn test_jaro2() {
-        let statuses = vec![
-            gateway("latency"),
-            gateway("packetloss"),
-            gateway("packetloss"),
-            gateway("latency, packetloss"),
-        ];
+	#[test]
+	fn test_jaro1() {
+		let statuses = vec![
+			gateway("latency"),
+			gateway("latency"),
+			gateway("latency"),
+			gateway("latency"),
+			gateway("latency"),
+			gateway("packetloss"),
+		];
 
-        assert_eq!(aggregate_gateway_status(&statuses), "packetloss");
-    }
+		assert_eq!(aggregate_gateway_status(&statuses), "latency");
+	}
 
-    #[test]
-    fn test_jaro3() {
-        let statuses = vec![
-            gateway("latency"),
-            gateway("packetloss"),
-            gateway("packetloss"),
-            gateway("latency, packetloss"),
-            gateway("Online"),
-        ];
 
-        assert_eq!(aggregate_gateway_status(&statuses), "latency");
-    }
+	#[test]
+	fn test_jaro2() {
+		let statuses = vec![
+			gateway("latency"),
+			gateway("packetloss"),
+			gateway("packetloss"),
+			gateway("latency, packetloss"),
+		];
 
-    #[test]
-    fn test_unknown_when_empty() {
-        let statuses: Vec<GatewayStatus> = Vec::new();
+		assert_eq!(aggregate_gateway_status(&statuses), "packetloss");
+	}
 
-        assert_eq!(aggregate_gateway_status(&statuses), "Unknown");
-    }
+	#[test]
+	fn test_jaro3() {
+		let statuses = vec![
+			gateway("latency"),
+			gateway("packetloss"),
+			gateway("packetloss"),
+			gateway("latency, packetloss"),
+			gateway("Online"),
+		];
 
-    #[test]
-    fn test_order() {
-        let statuses = vec![
-            gateway("Online"),
-            gateway("test"),
-        ];
+		assert_eq!(aggregate_gateway_status(&statuses), "latency");
+	}
 
-        assert_eq!(aggregate_gateway_status(&statuses), "test");
-    }
+	#[test]
+	fn test_unknown_when_empty() {
+		let statuses: Vec<GatewayStatus> = Vec::new();
+
+		assert_eq!(aggregate_gateway_status(&statuses), "Unknown");
+	}
+
+	#[test]
+	fn test_order() {
+		let statuses = vec![
+			gateway("Online"),
+			gateway("test"),
+		];
+
+		assert_eq!(aggregate_gateway_status(&statuses), "test");
+	}
 }
 
 
