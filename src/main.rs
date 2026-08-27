@@ -141,6 +141,13 @@ impl From<GatewayResponse> for GatewayStatus {
     }
 }
 
+async fn favicon() -> impl axum::response::IntoResponse {
+    (
+        [(axum::http::header::CONTENT_TYPE, "image/svg+xml")],
+        include_str!("../assets/favicon/graph-16.svg"),
+    )
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
@@ -163,6 +170,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let app = Router::new()
+        .route("/favicon.svg", get(favicon))
         .route("/api/gateways", get(get_gateways))
         .route("/gateways", get(gateways_page))
         .route("/gateways/gateways.css", get(gateways_css))

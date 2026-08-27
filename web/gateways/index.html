@@ -1,213 +1,214 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gateway Dashboard</title>
-    <link rel="stylesheet" href="./gateways/gateways.css">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Gateway Dashboard</title>
+	<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+	<link rel="stylesheet" href="./gateways/gateways.css">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style"
-          href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Noto+Sans+JP:wght@100..900&display=swap">
-    <link rel="stylesheet" media="print"
-          href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Noto+Sans+JP:wght@100..900&display=swap"
-          onload="this.media='all'">
-    <noscript>
-        <link rel="stylesheet"
-              href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Noto+Sans+JP:wght@100..900&display=swap">
-    </noscript>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="preload" as="style"
+		  href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Noto+Sans+JP:wght@100..900&display=swap">
+	<link rel="stylesheet" media="print"
+		  href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Noto+Sans+JP:wght@100..900&display=swap"
+		  onload="this.media='all'">
+	<noscript>
+		<link rel="stylesheet"
+			  href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Noto+Sans+JP:wght@100..900&display=swap">
+	</noscript>
 
 </head>
 <body>
 
-    <!-- <header> -->
-    <!--     <nav> -->
-    <!--         <a href="/page-gateways" class="active">Gateways</a> -->
-    <!--     </nav> -->
-    <!-- </header> -->
+	<!-- <header> -->
+	<!--     <nav> -->
+	<!--         <a href="/page-gateways" class="active">Gateways</a> -->
+	<!--     </nav> -->
+	<!-- </header> -->
 
-    <main>
-        <div class="blog-header">
-            <h2>Network Gateway Status</h2>
-            <p class="meta">Auto-refreshing every second</p>
-        </div>
+	<main>
+		<div class="blog-header">
+			<h2>Network Gateway Status</h2>
+			<p class="meta">Auto-refreshing every second</p>
+		</div>
 
-        <div id="gateway-container">
-            <!-- Gateway cards will be inserted here -->
-        </div>
-    </main>
+		<div id="gateway-container">
+			<!-- Gateway cards will be inserted here -->
+		</div>
+	</main>
 
-    <script>
-        const REFRESH_INTERVAL_MS = 1000;
+	<script>
+		const REFRESH_INTERVAL_MS = 1000;
 
-        function getStatusColor(status) {
-            switch (status.toLowerCase()) {
-                case 'online':
-                    return {
-                        bg: 'var(--color_gateway_up)',
-                        text: 'var(--text_dark)',
-                        border: 'var(--color_gateway_up)',
-                    };
-                case 'offline':
-                    return {
-                        bg: 'var(--color_warn)',
-                        text: 'var(--text_dark)',
-                        border: 'var(--color_warn)',
-                    };
+		function getStatusColor(status) {
+			switch (status.toLowerCase()) {
+				case 'online':
+					return {
+						bg: 'var(--color_gateway_up)',
+						text: 'var(--text_dark)',
+						border: 'var(--color_gateway_up)',
+					};
+				case 'offline':
+					return {
+						bg: 'var(--color_warn)',
+						text: 'var(--text_dark)',
+						border: 'var(--color_warn)',
+					};
 
-                case 'unknown':
-                case 'pending':
-                    return {
-                        bg: 'var(--color_unknown)',
-                        text: 'var(--text_dark)',
-                        border: 'var(--color_unknown)'
-                    };
-                case 'latency':
-                case 'packetloss':
-                case 'latency, packetloss':
-                default:
-                    return {
-                        bg: 'var(--color_warn_mild)',
-                        text: 'var(--text_dark)',
-                        border: 'var(--color_warn_mild)'
-                    };
-            }
-        }
+				case 'unknown':
+				case 'pending':
+					return {
+						bg: 'var(--color_unknown)',
+						text: 'var(--text_dark)',
+						border: 'var(--color_unknown)'
+					};
+				case 'latency':
+				case 'packetloss':
+				case 'latency, packetloss':
+				default:
+					return {
+						bg: 'var(--color_warn_mild)',
+						text: 'var(--text_dark)',
+						border: 'var(--color_warn_mild)'
+					};
+			}
+		}
 
-        function getStatusColorTextOnly(status) {
-            switch (status.toLowerCase()) {
-                case 'online': return {
-                    bg: 'var(--bg)',
-                    text: 'var(--color_gateway_up)',
-                    border: 'var(--color_gateway_up)',
-                };
-                case 'offline': return {
-                    bg: 'var(--bg)',
-                    text: 'var(--color_warn)',
-                    border: 'var(--color_warn)',
-                };
+		function getStatusColorTextOnly(status) {
+			switch (status.toLowerCase()) {
+				case 'online': return {
+					bg: 'var(--bg)',
+					text: 'var(--color_gateway_up)',
+					border: 'var(--color_gateway_up)',
+				};
+				case 'offline': return {
+					bg: 'var(--bg)',
+					text: 'var(--color_warn)',
+					border: 'var(--color_warn)',
+				};
 
-                case 'unknown':
-                case 'pending':
-                    return {
-                        bg: 'var(--bg)',
-                        text: 'var(color_unknown)',
-                        border: 'var(--color_unknown)'
-                    };
-                case 'latency':
-                case 'packetloss':
-                case 'latency, packetloss':
-                default:
-                    return {
-                        bg: 'var(--bg)',
-                        text: 'var(color_warn_mild)',
-                        border: 'var(--color_warn_mild)'
-                    };
-            }
-        }
+				case 'unknown':
+				case 'pending':
+					return {
+						bg: 'var(--bg)',
+						text: 'var(color_unknown)',
+						border: 'var(--color_unknown)'
+					};
+				case 'latency':
+				case 'packetloss':
+				case 'latency, packetloss':
+				default:
+					return {
+						bg: 'var(--bg)',
+						text: 'var(color_warn_mild)',
+						border: 'var(--color_warn_mild)'
+					};
+			}
+		}
 
-        function getStatusIcon(status) {
-            switch (status.toLowerCase()) {
-                case 'online':
-                    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-                case 'offline':
-                    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-                default:
-                    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
-            }
-        }
+		function getStatusIcon(status) {
+			switch (status.toLowerCase()) {
+				case 'online':
+					return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+				case 'offline':
+					return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+				default:
+					return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+			}
+		}
 
-        function createGatewayCard(gateway) {
-            const color = getStatusColor(gateway.status);
-            const colort = getStatusColorTextOnly(gateway.status);
+		function createGatewayCard(gateway) {
+			const color = getStatusColor(gateway.status);
+			const colort = getStatusColorTextOnly(gateway.status);
 
-            return `
-                <div class="gateway-card online">
-                    <div class="gateway-header">
-                        <span class="gateway-name">${gateway.name}</span>
-                        <span class="status-badge" style="background: ${color.bg}; color: ${color.text}; border-color: ${color.border}">
-                            ${getStatusIcon(gateway.status)}
-                            ${gateway.status}
-                        </span>
-                    </div>
-                    <div class="gateway-stats">
-                        <div class="stat-item">
-                            <span class="stat-label">Latency</span>
-                            <span class="stat-value" style="color: ${gateway.latency ? colort.text : 'var(--overlay0)'}">${gateway.latency || 'N/A'}</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Loss</span>
-                            <span class="stat-value" style="color: ${gateway.loss ? colort.text : 'var(--overlay0)'}">${gateway.loss || 'N/A'}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+			return `
+				<div class="gateway-card online">
+					<div class="gateway-header">
+						<span class="gateway-name">${gateway.name}</span>
+						<span class="status-badge" style="background: ${color.bg}; color: ${color.text}; border-color: ${color.border}">
+							${getStatusIcon(gateway.status)}
+							${gateway.status}
+						</span>
+					</div>
+					<div class="gateway-stats">
+						<div class="stat-item">
+							<span class="stat-label">Latency</span>
+							<span class="stat-value" style="color: ${gateway.latency ? colort.text : 'var(--overlay0)'}">${gateway.latency || 'N/A'}</span>
+						</div>
+						<div class="stat-item">
+							<span class="stat-label">Loss</span>
+							<span class="stat-value" style="color: ${gateway.loss ? colort.text : 'var(--overlay0)'}">${gateway.loss || 'N/A'}</span>
+						</div>
+					</div>
+				</div>
+			`;
+		}
 
-        function createGatewayGroup(group, aggregatedData) {
-            const aggregatedColor = getStatusColor(aggregatedData.status);
-            const aggregatedColort = getStatusColorTextOnly(aggregatedData.status);
-            return `
-                <div class="gateway-group">
-                    <div class="group-header" style="color: ${aggregatedColort.text}">
-                        <h3>${group.name}</h3>
-                        <span class="status-badge group-status" style="background: ${aggregatedColor.bg}; color: ${aggregatedColor.text}; border-color: ${aggregatedColor.border}">
-                            ${getStatusIcon(aggregatedData.status)}
-                            ${aggregatedData.status}
-                        </span>
-                    </div>
-                    <div class="group-stats" style="color: var(--text_unimp)">
-                        <div class="stat-item">
-                            <span class="stat-label">Avg Latency</span>
-                            <span class="stat-value">${aggregatedData.latency || 'N/A'}</span>
-                        </div>
-                        ${aggregatedData.loss ? `
-                            <div class="stat-item">
-                                <span class="stat-label">Avg Loss</span>
-                                <span class="stat-value">${aggregatedData.loss}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="gateway-cards">
-                        ${group.gateways.map(createGatewayCard).join('')}
-                    </div>
-                </div>
-            `;
-        }
+		function createGatewayGroup(group, aggregatedData) {
+			const aggregatedColor = getStatusColor(aggregatedData.status);
+			const aggregatedColort = getStatusColorTextOnly(aggregatedData.status);
+			return `
+				<div class="gateway-group">
+					<div class="group-header" style="color: ${aggregatedColort.text}">
+						<h3>${group.name}</h3>
+						<span class="status-badge group-status" style="background: ${aggregatedColor.bg}; color: ${aggregatedColor.text}; border-color: ${aggregatedColor.border}">
+							${getStatusIcon(aggregatedData.status)}
+							${aggregatedData.status}
+						</span>
+					</div>
+					<div class="group-stats" style="color: var(--text_unimp)">
+						<div class="stat-item">
+							<span class="stat-label">Avg Latency</span>
+							<span class="stat-value">${aggregatedData.latency || 'N/A'}</span>
+						</div>
+						${aggregatedData.loss ? `
+							<div class="stat-item">
+								<span class="stat-label">Avg Loss</span>
+								<span class="stat-value">${aggregatedData.loss}</span>
+							</div>
+						` : ''}
+					</div>
+					<div class="gateway-cards">
+						${group.gateways.map(createGatewayCard).join('')}
+					</div>
+				</div>
+			`;
+		}
 
-        function renderGatewayData(data) {
-            const container = document.getElementById('gateway-container');
+		function renderGatewayData(data) {
+			const container = document.getElementById('gateway-container');
 
-            if (!data || data.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <p>No gateway data available</p>
-                    </div>
-                `;
-                return;
-            }
+			if (!data || data.length === 0) {
+				container.innerHTML = `
+					<div class="empty-state">
+						<p>No gateway data available</p>
+					</div>
+				`;
+				return;
+			}
 
-            // console.log(data)
-            const html = data.map(([name, agData]) => createGatewayGroup(agData, agData)).join('');
-            container.innerHTML = html;
-        }
+			// console.log(data)
+			const html = data.map(([name, agData]) => createGatewayGroup(agData, agData)).join('');
+			container.innerHTML = html;
+		}
 
-        async function fetchGateways() {
-            try {
-                const response = await fetch('/api/gateways');
-                if (response.ok) {
-                    const data = await response.json();
-                    renderGatewayData(data);
-                }
-            } catch (error) {
-                console.error('Failed to fetch gateway data:', error);
-            }
-        }
+		async function fetchGateways() {
+			try {
+				const response = await fetch('/api/gateways');
+				if (response.ok) {
+					const data = await response.json();
+					renderGatewayData(data);
+				}
+			} catch (error) {
+				console.error('Failed to fetch gateway data:', error);
+			}
+		}
 
-        // Initial load and interval refresh
-        fetchGateways();
-        setInterval(fetchGateways, REFRESH_INTERVAL_MS);
-    </script>
+		// Initial load and interval refresh
+		fetchGateways();
+		setInterval(fetchGateways, REFRESH_INTERVAL_MS);
+	</script>
 </body>
 </html>
